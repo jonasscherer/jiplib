@@ -1,0 +1,8 @@
+README.rst
+jiplib.py
+setup.cfg
+setup.py
+jiplib.egg-info/PKG-INFO
+jiplib.egg-info/SOURCES.txt
+jiplib.egg-info/dependency_links.txt
+jiplib.egg-info/top_level.txt
