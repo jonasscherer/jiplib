@@ -1,9 +1,18 @@
 import uuid
 import jsonpickle
+import json
 from copy import copy
 import sys, requests, re, shutil, os, urllib
 from urllib.parse import urljoin
 from urllib.request import urlretrieve
+
+
+def init(faas_url_tmp, fileserver_url_tmp, callback_url_tmp):
+    global faas_url, fileserver_url, callback_url
+
+    faas_url = faas_url_tmp
+    fileserver_url = fileserver_url_tmp
+    callback_url = callback_url_tmp
 
 
 def create_uid():
@@ -65,8 +74,9 @@ class JipUser(object):
 
 
 class JipImage(object):
-    def __init__(self, id_image="", uploader="", file_type="", path_filesystem="", url_fileserver="", resolution="",
-                 spacing=""):
+    def __init__(self, id_image="na", uploader="na", file_type="na", path_filesystem="na", url_fileserver="na",
+                 resolution="na",
+                 spacing="na"):
         self.id_image = id_image
         self.uploader = uploader
         self.file_type = file_type
@@ -77,8 +87,9 @@ class JipImage(object):
 
 
 class JipOrder(object):
-    def __init__(self, title="", text="", hash="", id_order="", customer="", order_path="", timestamp_creation="",
-                 target_function="", image_list=""):
+    def __init__(self, title="na", text="na", hash="na", id_order="na", customer="na", order_path="na",
+                 timestamp_creation="na",
+                 target_function="na", image_list="na"):
         self.hash = hash
         self.title = title
         self.text = text
@@ -91,17 +102,17 @@ class JipOrder(object):
 
 
 class JipUpdate(object):
-    def __init__(self, id_order="", update_message="", progress=""):
+    def __init__(self, id_order="na", update_message="na", progress="na"):
         self.id_order = id_order
         self.update_message = update_message
         self.progress = progress
 
 
 class JipFunction(object):
-    def __init__(self, name="", version="", info="", author="", description="", file_types_consumed="",
-                 file_types_produced="",
-                 resolution_consumed="",
-                 spacing_consumed=""):
+    def __init__(self, name="na", version="na", info="na", author="na", description="na", file_types_consumed="na",
+                 file_types_produced="na",
+                 resolution_consumed="na",
+                 spacing_consumed="na"):
         self.name = name
         self.version = version
         self.info = info
@@ -113,30 +124,27 @@ class JipFunction(object):
         self.spacing_consumed = spacing_consumed
 
 
-def download_file_list(to_do, uid):
-    basic_url = os.environ['BASICURL']
-    print("BASICURL: %s" % basic_url)
+def download_file_list(image_list, target_path):
+    global fileserver_url
 
-    source_path = os.environ['SOURCEPATH']
+    if not os.path.exists(target_path):
+        os.makedirs(target_path)
 
-    if not os.path.exists(source_path):
-        os.makedirs(source_path)
+    for img_file in image_list:
+        filename = os.path.basename(img_file.url_fileserver)
+        file_target = os.path.join(target_path, filename)
 
-    for img_file in to_do:
-        print("Download File: %s" % img_file.title)
-        server_url = urljoin(basic_url, img_file.path)
-        file_target = os.path.join(source_path, img_file.title)
+        print("Download File: %s" % filename)
         print("server_url: %s" % server_url)
         print("file_target: %s" % file_target)
-        urlretrieve(server_url, file_target)
-        print("File downloaded: %s" % img_file)
+
+        urlretrieve(img_file.url_fileserver, file_target)
 
     print("All files downloaded!")
 
 
-def upload_results(uuid, function_name):
-    basic_url = os.environ['BASICURL']
-    target_path = os.environ['TARGETPATH']
+def upload_results(source_path, function_name):
+    global fileserver_url
 
     post_url = urljoin(basic_url, 'post')
     print("Post-url: %s" % post_url)
@@ -154,5 +162,41 @@ def upload_results(uuid, function_name):
             print("File %s uploaded!" % file_name)
 
 
+def send_order(jip_order, FILESERVER_URL, FAAS_URL, CALLBACK_URL, async=False):
+    global faas_url, callback_url
+
+    if async:
+        post_url = urljoin(faas_url + "/async-function/", jip_order.target_function)
+    else:
+        post_url = urljoin(faas_url + "/function/", jip_order.target_function)
+
+    json_string = convert_object2json(jip_order)
+    payload_dict = {'command': 'order', 'order': json_string, 'FILESERVER_URL': FILESERVER_URL, 'FAAS_URL': FAAS_URL,
+                    'CALLBACK_URL': CALLBACK_URL}
+    payload_json = json.dumps(payload_dict)
+    response = requests.post(post_url, data=payload_json, timeout=30)
+    if response.text is not None:
+        print("Function response: %s" % response.text)
+
+
+def update_order(jip_update):
+    pass
+
+
 def remove_tmp(uid):
     shutil.rmtree("/tmp/%s/" % uid)
+
+
+def jip_log(jip_order, msg):
+    global callback_url
+
+    json_string = convert_object2json(jip_order)
+
+    payload_dict = {'type': 'log', 'order': json_string, 'message': msg}
+    payload_json = json.dumps(payload_dict)
+    response = requests.post(callback_url, data=payload_json, timeout=30)
+    print(response.text)
+
+
+def get_dict(json_string):
+    return json.loads(json_string)
