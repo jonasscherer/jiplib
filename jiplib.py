@@ -2,7 +2,8 @@ import uuid
 import jsonpickle
 from copy import copy
 import sys, requests, re, shutil, os, urllib
-from urlparse import urljoin
+from urllib.parse import urljoin
+from urllib.request import urlretrieve
 
 
 def create_uid():
@@ -123,11 +124,11 @@ def download_file_list(to_do, uid):
 
     for img_file in to_do:
         print("Download File: %s" % img_file.title)
-        server_url = urllib.urljoin(basic_url, img_file.path)
+        server_url = urljoin(basic_url, img_file.path)
         file_target = os.path.join(source_path, img_file.title)
         print("server_url: %s" % server_url)
         print("file_target: %s" % file_target)
-        urllib.urlretrieve(server_url, file_target)
+        urlretrieve(server_url, file_target)
         print("File downloaded: %s" % img_file)
 
     print("All files downloaded!")
@@ -137,7 +138,7 @@ def upload_results(uuid, function_name):
     basic_url = os.environ['BASICURL']
     target_path = os.environ['TARGETPATH']
 
-    post_url = urllib.urljoin(basic_url, 'post')
+    post_url = urljoin(basic_url, 'post')
     print("Post-url: %s" % post_url)
 
     headers = {'uuid': uuid, 'function_name': function_name}
