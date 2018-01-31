@@ -29,7 +29,6 @@ def convert_json2object(json_str):
 
 def get_uid():
     uid = uuid.uuid4().hex
-    print("Generating new order UID! %s" % uid)
     return uid
 
 
@@ -37,7 +36,7 @@ def translate_JipImageModel_to_JipImage(jip_image_model):
     jip_image = JipImage()
 
     jip_image.id_image = jip_image_model.id
-    jip_image.uploader = jip_image_model.author
+    jip_image.uploader = jip_image_model.author.username
     jip_image.file_type = jip_image_model.file_type
     jip_image.path_filesystem = jip_image_model.path_filesystem
     jip_image.url_fileserver = jip_image_model.url_fileserver
@@ -52,9 +51,12 @@ def translate_JipOrderModel_to_JipOrder(jip_order_model, img_list):
     jip_order.hash = jip_order_model.hash
     jip_order.title = jip_order_model.title
     jip_order.text = jip_order_model.text
-    jip_order.id_order = jip_order_model.id
-    jip_order.customer = jip_order_model.author.username
+    jip_order.id = jip_order_model.id
+
+    author = JipUser(username=jip_order_model.author.username, id=jip_order_model.author.id, role="na")
+    jip_order.author = author
     jip_order.target_function = jip_order_model.target_function
+    jip_order.status = jip_order_model.status
     # jip_order.timestamp_creation = JipOrderModel.timestamp_creation
 
     new_img_list = []
@@ -68,8 +70,9 @@ def translate_JipOrderModel_to_JipOrder(jip_order_model, img_list):
 
 
 class JipUser(object):
-    def __init__(self, name, role):
-        self.name = name
+    def __init__(self, username="na", id="na", role="na"):
+        self.username = username
+        self.id = id
         self.role = role
 
 
@@ -87,18 +90,18 @@ class JipImage(object):
 
 
 class JipOrder(object):
-    def __init__(self, title="na", text="na", hash="na", id_order="na", customer="na", order_path="na",
-                 timestamp_creation="na",
-                 target_function="na", image_list="na"):
+    def __init__(self, title="na", text="na", hash="na", id="na", author="na", order_path="na",
+                 timestamp_creation="na", target_function="na", image_list="na", status="na"):
         self.hash = hash
         self.title = title
         self.text = text
-        self.id_order = id_order
-        self.customer = customer
+        self.id = id
+        self.author = author
         self.order_path = order_path
         self.timestamp_creation = timestamp_creation
         self.target_function = target_function
         self.image_list = image_list
+        self.status = status
 
 
 class JipUpdate(object):
@@ -134,36 +137,26 @@ def download_file_list(image_list, target_path):
         filename = os.path.basename(img_file.url_fileserver)
         file_target = os.path.join(target_path, filename)
 
-        print("Download File: %s" % filename)
-        print("server_url: %s" % server_url)
-        print("file_target: %s" % file_target)
-
         urlretrieve(img_file.url_fileserver, file_target)
 
-    print("All files downloaded!")
 
-
-def upload_results(source_path, function_name):
+def upload_results(order, source_path):
     global fileserver_url
 
-    post_url = urljoin(basic_url, 'post')
-    print("Post-url: %s" % post_url)
+    post_url = urljoin(fileserver_url, 'post')
 
-    headers = {'uuid': uuid, 'function_name': function_name}
+    headers = {'user': order.author.id + "_" + order.author.username, 'function_name': function_name}
 
-    for path in os.listdir(target_path):
-        full_path = os.path.join(target_path, path)
+    for path in os.listdir(source_path):
+        full_path = os.path.join(source_path, path)
         if os.path.isfile(full_path):
             file_name = os.path.basename(full_path)
-            print("upload file: %s" % full_path)
             with open(full_path, 'rb') as f:
                 r = requests.post(post_url, files={file_name: f}, headers=headers)
-                print(r.text)
-            print("File %s uploaded!" % file_name)
 
 
-def send_order(jip_order, FILESERVER_URL, FAAS_URL, CALLBACK_URL, async=False):
-    global faas_url, callback_url
+def send_order(jip_order, async=False):
+    global faas_url, callback_url, fileserver_url
 
     if async:
         post_url = urljoin(faas_url + "/async-function/", jip_order.target_function)
@@ -171,20 +164,38 @@ def send_order(jip_order, FILESERVER_URL, FAAS_URL, CALLBACK_URL, async=False):
         post_url = urljoin(faas_url + "/function/", jip_order.target_function)
 
     json_string = convert_object2json(jip_order)
-    payload_dict = {'command': 'order', 'order': json_string, 'FILESERVER_URL': FILESERVER_URL, 'FAAS_URL': FAAS_URL,
-                    'CALLBACK_URL': CALLBACK_URL}
+    payload_dict = {'command': 'order', 'order': json_string, 'FILESERVER_URL': fileserver_url, 'FAAS_URL': faas_url,
+                    'CALLBACK_URL': callback_url}
     payload_json = json.dumps(payload_dict)
     response = requests.post(post_url, data=payload_json, timeout=30)
     if response.text is not None:
         print("Function response: %s" % response.text)
 
 
+def get_function_info(function_name, async=False):
+    global faas_url
+    post_url = urljoin(faas_url + "/function/", function_name)
+
+    payload_dict = {'command': 'info'}
+    payload_json = json.dumps(payload_dict)
+    response = requests.post(post_url, data=payload_json, timeout=30)
+    response_text = response.text
+
+    if "py/object" in response_text:
+        response_text = response_text[response_text.find("{"): response_text.find("}") + 1]
+        function_info = convert_json2object(response_text)
+    else:
+        function_info = JipFunction(name=function_name)
+
+    return function_info
+
+
 def update_order(jip_update):
     pass
 
 
-def remove_tmp(uid):
-    shutil.rmtree("/tmp/%s/" % uid)
+def remove_tmp(path):
+    shutil.rmtree(path)
 
 
 def jip_log(jip_order, msg):
@@ -195,7 +206,6 @@ def jip_log(jip_order, msg):
     payload_dict = {'type': 'log', 'order': json_string, 'message': msg}
     payload_json = json.dumps(payload_dict)
     response = requests.post(callback_url, data=payload_json, timeout=30)
-    print(response.text)
 
 
 def get_dict(json_string):
