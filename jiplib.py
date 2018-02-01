@@ -162,17 +162,21 @@ def upload_results(order, source_path, function_name):
 
         post_url = urljoin(fileserver_url, 'post')
 
-        headers = {'user': order.author.id + "_" + order.author.username, 'function_name': function_name}
+        headers = {'order': str(order.author.id) + "_" + str(order.author.username), 'hash': order.hash,
+                   'function_name': function_name}
         tar_file_path = os.path.join(source_path, function_name)
         make_tarfile(tar_file_path, source_path)
         filename = os.path.basename(tar_file_path)
         with open(tar_file_path, 'rb') as f:
             r = requests.post(post_url, files={filename: f}, headers=headers)
+        return "RESULT:" + tar_file_path
+        return "RESULT:" + tar_file_path
+
 
     except Exception as e:
-        jip_log(order, ("download_file_list() ERROR: %s" % str(e)))
+        jip_log(order, ("upload_results() ERROR: %s" % str(e)))
         print(str(e))
-        return str(e)
+        return "ERROR: " + str(e)
 
 
 def send_order(jip_order, async=False):
@@ -195,7 +199,6 @@ def send_order(jip_order, async=False):
             print("Function response: %s" % response.text)
 
     except Exception as e:
-        jip_log(jip_order, ("download_file_list() ERROR: %s" % str(e)))
         print(str(e))
         return str(e)
 
