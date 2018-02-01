@@ -128,21 +128,24 @@ class JipFunction(object):
 
 def download_file_list(order, target_path):
     try:
-
         global fileserver_url
-        image_list = order.image_list
 
         if not os.path.exists(target_path):
             jip_log(order, ("MKDIR %s" % target_path))
             os.makedirs(target_path)
 
+        image_list = order.image_list
+
         for img_file in image_list:
+            jip_log(order, ("IN FOR"))
             filename = os.path.basename(img_file.url_fileserver)
             server_url = urljoin(jiplib.fileserver_url, jip_order.image_list[0].url_fileserver)
             file_target = os.path.join(target_path, filename)
             jip_log(order, ("server_url %s" % server_url))
             jip_log(order, ("file_target %s" % file_target))
             urlretrieve(server_url, file_target)
+
+        jip_log(order, ("END FOR"))
 
     except Exception as e:
         print(e)
