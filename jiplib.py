@@ -136,11 +136,8 @@ def download_file_list(image_list, target_path):
 
         for img_file in image_list:
             filename = os.path.basename(img_file.url_fileserver)
-            print(filename)
-            server_url = urljoin(fileserver_url, img_file.url_fileserver)
-            print(server_url)
+            os.path.join(jiplib.fileserver_url, jip_order.image_list[0].url_fileserver)
             file_target = os.path.join(target_path, filename)
-            print(file_target)
             urlretrieve(server_url, file_target)
 
     except Exception as e:
