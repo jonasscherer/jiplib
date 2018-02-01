@@ -106,10 +106,12 @@ class JipOrder(object):
 
 
 class JipUpdate(object):
-    def __init__(self, id_order="na", update_message="na", progress="na"):
+    def __init__(self, id_order="na", update_message="na", progress="na", type="na", status="na"):
         self.id_order = id_order
         self.update_message = update_message
         self.progress = progress
+        self.type = type
+        self.status = status
 
 
 class JipFunction(object):
@@ -164,11 +166,11 @@ def upload_results(order, source_path, function_name):
 
         headers = {'order': str(order.author.id) + "_" + str(order.author.username), 'hash': order.hash,
                    'function_name': function_name}
-        tar_file_path = os.path.join(source_path, function_name,".tar.gz")
+        tar_file_path = os.path.join(source_path, function_name + ".tar.gz")
         filename = os.path.basename(tar_file_path)
-        jip_log(order,tar_file_path)
-        jip_log(order,filename)
-        jip_log(order,source_path)
+        jip_log(order, tar_file_path)
+        jip_log(order, filename)
+        jip_log(order, source_path)
 
         make_tarfile(tar_file_path, source_path)
 
@@ -241,14 +243,23 @@ def remove_tmp(path):
 
 
 def jip_log(jip_order, msg):
+    update = JipUpdate()
+    update.id_order = jip_order.id
+    update.update_message = msg
+    update.progress = "-1"
+    update.type = "log"
+    update.status = "running"
+
+    send_update(jip_order)
+
+
+def send_update(update):
     try:
         global callback_url
+        update_json = convert_object2json(update)
+        response = requests.post(callback_url, data=update_json, timeout=3)
 
-        json_string = convert_object2json(jip_order)
 
-        payload_dict = {'type': 'log', 'order': json_string, 'message': str(msg)}
-        payload_json = json.dumps(payload_dict)
-        response = requests.post(callback_url, data=payload_json, timeout=3)
     except Exception as e:
         return e
 
