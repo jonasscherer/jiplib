@@ -183,6 +183,7 @@ def send_order(jip_order, async=False):
                         'CALLBACK_URL': callback_url, 'X-Callback-Url': callback_url}
         payload_json = json.dumps(payload_dict)
 
+
         response = requests.post(post_url, data=payload_json, timeout=5)
         if response.text is not None:
             print("Function response: %s" % response.text)
