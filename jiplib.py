@@ -127,68 +127,88 @@ class JipFunction(object):
 
 
 def download_file_list(image_list, target_path):
-    global fileserver_url
+    try:
 
-    if not os.path.exists(target_path):
-        os.makedirs(target_path)
+        global fileserver_url
 
-    for img_file in image_list:
-        filename = os.path.basename(img_file.url_fileserver)
-        server_url = urljoin(fileserver_url, img_file.url_fileserver)
-        file_target = os.path.join(target_path, filename)
+        if not os.path.exists(target_path):
+            os.makedirs(target_path)
 
-        urlretrieve(img_file.url_fileserver, file_target)
+        for img_file in image_list:
+            filename = os.path.basename(img_file.url_fileserver)
+            server_url = urljoin(fileserver_url, img_file.url_fileserver)
+            file_target = os.path.join(target_path, filename)
+            urlretrieve(server_url, file_target)
+
+    except Exception as e:
+        return e
 
 
 def upload_results(order, source_path):
-    global fileserver_url
+    try:
 
-    post_url = urljoin(fileserver_url, 'post')
+        global fileserver_url
 
-    headers = {'user': order.author.id + "_" + order.author.username, 'function_name': function_name}
+        post_url = urljoin(fileserver_url, 'post')
 
-    for path in os.listdir(source_path):
-        full_path = os.path.join(source_path, path)
-        if os.path.isfile(full_path):
-            file_name = os.path.basename(full_path)
-            with open(full_path, 'rb') as f:
-                r = requests.post(post_url, files={file_name: f}, headers=headers)
+        headers = {'user': order.author.id + "_" + order.author.username, 'function_name': function_name}
+
+        for path in os.listdir(source_path):
+            full_path = os.path.join(source_path, path)
+            if os.path.isfile(full_path):
+                file_name = os.path.basename(full_path)
+                with open(full_path, 'rb') as f:
+                    r = requests.post(post_url, files={file_name: f}, headers=headers)
+    except Exception as e:
+        return e
 
 
 def send_order(jip_order, async=False):
-    global faas_url, callback_url, fileserver_url
-    if async:
-        post_url = urljoin(faas_url + "/async-function/", jip_order.target_function)
-    else:
-        post_url = urljoin(faas_url + "/function/", jip_order.target_function)
+    try:
 
-    json_string = convert_object2json(jip_order)
-    payload_dict = {'command': 'order', 'order': json_string, 'FILESERVER_URL': fileserver_url, 'FAAS_URL': faas_url,
-                    'CALLBACK_URL': callback_url, 'X-Callback-Url': callback_url}
-    payload_json = json.dumps(payload_dict)
+        global faas_url, callback_url, fileserver_url
+        if async:
+            post_url = urljoin(faas_url + "/async-function/", jip_order.target_function)
+        else:
+            post_url = urljoin(faas_url + "/function/", jip_order.target_function)
 
-    response = requests.post(post_url, data=payload_json, timeout=5)
-    if response.text is not None:
-        print("Function response: %s" % response.text)
+        json_string = convert_object2json(jip_order)
+        payload_dict = {'command': 'order', 'order': json_string, 'FILESERVER_URL': fileserver_url,
+                        'FAAS_URL': faas_url,
+                        'CALLBACK_URL': callback_url, 'X-Callback-Url': callback_url}
+        payload_json = json.dumps(payload_dict)
+
+        response = requests.post(post_url, data=payload_json, timeout=5)
+        if response.text is not None:
+            print("Function response: %s" % response.text)
+
+    except Exception as e:
+        return e
 
 
 def get_function_info(function_name, async=False):
-    global faas_url
-    post_url = urljoin(faas_url + "/function/", function_name)
+    try:
 
-    payload_dict = {'command': 'info'}
-    payload_json = json.dumps(payload_dict)
-    response = requests.post(post_url, data=payload_json, timeout=1)
-    response_text = response.text
+        global faas_url
+        post_url = urljoin(faas_url + "/function/", function_name)
 
-    if "py/object" in response_text:
-        response_text = response_text[response_text.find("{"): response_text.find("}") + 1]
-        function_info = convert_json2object(response_text)
-    else:
+        payload_dict = {'command': 'info'}
+        payload_json = json.dumps(payload_dict)
+        response = requests.post(post_url, data=payload_json, timeout=1)
+        response_text = response.text
+
+        if "py/object" in response_text:
+            response_text = response_text[response_text.find("{"): response_text.find("}") + 1]
+            function_info = convert_json2object(response_text)
+        else:
+            function_info = JipFunction(name=function_name)
+
+        function_info.faas_id = function_name
+        return function_info
+
+    except Exception as e:
         function_info = JipFunction(name=function_name)
-
-    function_info.faas_id = function_name
-    return function_info
+        return function_info
 
 
 def update_order(jip_update):
@@ -200,13 +220,16 @@ def remove_tmp(path):
 
 
 def jip_log(jip_order, msg):
-    global callback_url
+    try:
+        global callback_url
 
-    json_string = convert_object2json(jip_order)
+        json_string = convert_object2json(jip_order)
 
-    payload_dict = {'type': 'log', 'order': json_string, 'message': str(msg)}
-    payload_json = json.dumps(payload_dict)
-    response = requests.post(callback_url, data=payload_json, timeout=3)
+        payload_dict = {'type': 'log', 'order': json_string, 'message': str(msg)}
+        payload_json = json.dumps(payload_dict)
+        response = requests.post(callback_url, data=payload_json, timeout=3)
+    except Exception as e:
+        return e
 
 
 def get_dict(json_string):
