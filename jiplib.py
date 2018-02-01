@@ -204,7 +204,7 @@ def jip_log(jip_order, msg):
 
     json_string = convert_object2json(jip_order)
 
-    payload_dict = {'type': 'log', 'order': json_string, 'message': msg}
+    payload_dict = {'type': 'log', 'order': json_string, 'message': str(msg)}
     payload_json = json.dumps(payload_dict)
     response = requests.post(callback_url, data=payload_json, timeout=2)
 
