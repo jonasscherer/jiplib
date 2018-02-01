@@ -177,6 +177,17 @@ def upload_results(order, source_path):
         jip_log(order, "Finished zipping...")
         with open(tar_file_path, 'rb') as f:
             r = requests.post(post_url, files={filename: f}, headers=headers)
+
+        server_file_path = os.path.join("orders", str(order.author.id) + "_" + str(order.author.username), order.hash,
+                                        function_name, filename)
+        update = JipUpdate()
+        update.id_order = order.id
+        update.update_message = server_file_path
+        update.progress = "100"
+        update.type = "result"
+        update.status = "finished"
+
+        send_update(update)
         return "RESULT:" + tar_file_path
 
 
