@@ -113,9 +113,7 @@ class JipUpdate(object):
 
 class JipFunction(object):
     def __init__(self, name="na", version="na", info="na", author="na", description="na", file_types_consumed="na",
-                 file_types_produced="na",
-                 resolution_consumed="na",
-                 spacing_consumed="na"):
+                 file_types_produced="na", resolution_consumed="na", spacing_consumed="na", faas_id="na"):
         self.name = name
         self.version = version
         self.info = info
@@ -125,6 +123,7 @@ class JipFunction(object):
         self.file_types_produced = file_types_produced
         self.resolution_consumed = resolution_consumed
         self.spacing_consumed = spacing_consumed
+        self.faas_id = faas_id
 
 
 def download_file_list(image_list, target_path):
@@ -165,8 +164,9 @@ def send_order(jip_order, async=False):
 
     json_string = convert_object2json(jip_order)
     payload_dict = {'command': 'order', 'order': json_string, 'FILESERVER_URL': fileserver_url, 'FAAS_URL': faas_url,
-                    'CALLBACK_URL': callback_url}
+                    'CALLBACK_URL': callback_url, 'X-Callback-Url': callback_url}
     payload_json = json.dumps(payload_dict)
+
     response = requests.post(post_url, data=payload_json, timeout=5)
     if response.text is not None:
         print("Function response: %s" % response.text)
@@ -187,6 +187,7 @@ def get_function_info(function_name, async=False):
     else:
         function_info = JipFunction(name=function_name)
 
+    function_info.faas_id = function_name
     return function_info
 
 
