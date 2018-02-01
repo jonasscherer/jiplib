@@ -252,7 +252,7 @@ def jip_log(jip_order, msg):
     update.type = "log"
     update.status = "running"
 
-    send_update(jip_order)
+    send_update(update)
 
 
 def send_update(update):
