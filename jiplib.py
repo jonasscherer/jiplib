@@ -149,8 +149,8 @@ def download_file_list(order, target_path):
 
     except Exception as e:
         jip_log(order, ("ERROR: %s" % str(e)))
-        print(e)
-        return e
+        print(str(e))
+        return str(e)
 
 
 def upload_results(order, source_path):
