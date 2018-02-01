@@ -139,7 +139,7 @@ def download_file_list(order, target_path):
         for img_file in image_list:
             jip_log(order, ("IN FOR"))
             filename = os.path.basename(img_file.url_fileserver)
-            server_url = urljoin(jiplib.fileserver_url, jip_order.image_list[0].url_fileserver)
+            server_url = urljoin(jiplib.fileserver_url, img_file.url_fileserver)
             file_target = os.path.join(target_path, filename)
             jip_log(order, ("server_url %s" % server_url))
             jip_log(order, ("file_target %s" % file_target))
@@ -148,6 +148,7 @@ def download_file_list(order, target_path):
         jip_log(order, ("END FOR"))
 
     except Exception as e:
+        jip_log(order, ("ERROR: %s" % str(e)))
         print(e)
         return e
 
@@ -185,7 +186,6 @@ def send_order(jip_order, async=False):
                         'FAAS_URL': faas_url,
                         'CALLBACK_URL': callback_url, 'X-Callback-Url': callback_url}
         payload_json = json.dumps(payload_dict)
-
 
         response = requests.post(post_url, data=payload_json, timeout=5)
         if response.text is not None:
