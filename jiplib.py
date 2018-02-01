@@ -139,7 +139,7 @@ def download_file_list(order, target_path):
         for img_file in image_list:
             jip_log(order, ("IN FOR"))
             filename = os.path.basename(img_file.url_fileserver)
-            server_url = urljoin(jiplib.fileserver_url, img_file.url_fileserver)
+            server_url = urljoin(fileserver_url, img_file.url_fileserver)
             file_target = os.path.join(target_path, filename)
             jip_log(order, ("server_url %s" % server_url))
             jip_log(order, ("file_target %s" % file_target))
