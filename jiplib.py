@@ -36,7 +36,7 @@ def translate_JipImageModel_to_JipImage(jip_image_model):
     jip_image = JipImage()
 
     jip_image.id_image = jip_image_model.id
-    jip_image.uploader = jip_image_model.author.username
+    jip_image.uploader = jip_image_model.author
     jip_image.file_type = jip_image_model.file_type
     jip_image.path_filesystem = jip_image_model.path_filesystem
     jip_image.url_fileserver = jip_image_model.url_fileserver
