@@ -33,8 +33,6 @@ def get_uid():
     return uid
 
 
-
-
 def translate_JipImageModel_to_JipImage(jip_image_model):
     jip_image = JipImage()
 
@@ -158,24 +156,25 @@ def download_file_list(order, target_path):
         return str(e)
 
 
-def upload_results(order, source_path, function_name):
+def upload_results(order, source_path):
     try:
-        jip_log(order, ("in upload_results()"))
-
         global fileserver_url
 
+        function_name = order.target_function
         post_url = urljoin(fileserver_url, 'post')
 
-        headers = {'order': str(order.author.id) + "_" + str(order.author.username), 'hash': order.hash,
+        headers = {'user': str(order.author.id) + "_" + str(order.author.username), 'hash': order.hash,
                    'function_name': function_name}
         tar_file_path = os.path.join(source_path, function_name + ".tar.gz")
         filename = os.path.basename(tar_file_path)
         jip_log(order, tar_file_path)
         jip_log(order, filename)
         jip_log(order, source_path)
+        jip_log(order, post_url)
 
         make_tarfile(tar_file_path, source_path)
 
+        jip_log(order, "Finished zipping...")
         with open(tar_file_path, 'rb') as f:
             r = requests.post(post_url, files={filename: f}, headers=headers)
         return "RESULT:" + tar_file_path
