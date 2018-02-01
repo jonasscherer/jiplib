@@ -33,6 +33,8 @@ def get_uid():
     return uid
 
 
+
+
 def translate_JipImageModel_to_JipImage(jip_image_model):
     jip_image = JipImage()
 
