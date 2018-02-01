@@ -167,7 +167,7 @@ def send_order(jip_order, async=False):
     payload_dict = {'command': 'order', 'order': json_string, 'FILESERVER_URL': fileserver_url, 'FAAS_URL': faas_url,
                     'CALLBACK_URL': callback_url}
     payload_json = json.dumps(payload_dict)
-    response = requests.post(post_url, data=payload_json, timeout=30)
+    response = requests.post(post_url, data=payload_json, timeout=5)
     if response.text is not None:
         print("Function response: %s" % response.text)
 
@@ -178,7 +178,7 @@ def get_function_info(function_name, async=False):
 
     payload_dict = {'command': 'info'}
     payload_json = json.dumps(payload_dict)
-    response = requests.post(post_url, data=payload_json, timeout=30)
+    response = requests.post(post_url, data=payload_json, timeout=1)
     response_text = response.text
 
     if "py/object" in response_text:
@@ -205,7 +205,7 @@ def jip_log(jip_order, msg):
 
     payload_dict = {'type': 'log', 'order': json_string, 'message': msg}
     payload_json = json.dumps(payload_dict)
-    response = requests.post(callback_url, data=payload_json, timeout=30)
+    response = requests.post(callback_url, data=payload_json, timeout=2)
 
 
 def get_dict(json_string):
