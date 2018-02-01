@@ -132,6 +132,7 @@ def download_file_list(image_list, target_path):
         global fileserver_url
 
         if not os.path.exists(target_path):
+            print("MKDIR %s" % target_path)
             os.makedirs(target_path)
 
         for img_file in image_list:
@@ -141,6 +142,7 @@ def download_file_list(image_list, target_path):
             urlretrieve(server_url, file_target)
 
     except Exception as e:
+        print(e)
         return e
 
 
