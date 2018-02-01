@@ -155,6 +155,7 @@ def download_file_list(order, target_path):
 
 def upload_results(order, source_path):
     try:
+        jip_log(order, ("in upload_results()"))
 
         global fileserver_url
 
@@ -164,12 +165,16 @@ def upload_results(order, source_path):
 
         for path in os.listdir(source_path):
             full_path = os.path.join(source_path, path)
+            jip_log(order, ("full_path: %s"%full_path))
+
             if os.path.isfile(full_path):
                 file_name = os.path.basename(full_path)
                 with open(full_path, 'rb') as f:
                     r = requests.post(post_url, files={file_name: f}, headers=headers)
     except Exception as e:
-        return e
+        jip_log(order, ("download_file_list() ERROR: %s" % str(e)))
+        print(str(e))
+        return str(e)
 
 
 def send_order(jip_order, async=False):
@@ -192,7 +197,9 @@ def send_order(jip_order, async=False):
             print("Function response: %s" % response.text)
 
     except Exception as e:
-        return e
+        jip_log(jip_order, ("download_file_list() ERROR: %s" % str(e)))
+        print(str(e))
+        return str(e)
 
 
 def get_function_info(function_name, async=False):
