@@ -5,6 +5,7 @@ from copy import copy
 import sys, requests, re, shutil, os, urllib
 from urllib.parse import urljoin
 from urllib.request import urlretrieve
+import tarfile
 
 
 def init(faas_url_tmp, fileserver_url_tmp, callback_url_tmp):
@@ -153,7 +154,7 @@ def download_file_list(order, target_path):
         return str(e)
 
 
-def upload_results(order, source_path):
+def upload_results(order, source_path, function_name):
     try:
         jip_log(order, ("in upload_results()"))
 
@@ -162,15 +163,12 @@ def upload_results(order, source_path):
         post_url = urljoin(fileserver_url, 'post')
 
         headers = {'user': order.author.id + "_" + order.author.username, 'function_name': function_name}
+        tar_file_path = os.path.join(source_path, function_name)
+        make_tarfile(tar_file_path, source_path)
+        filename = os.path.basename(tar_file_path)
+        with open(tar_file_path, 'rb') as f:
+            r = requests.post(post_url, files={filename: f}, headers=headers)
 
-        for path in os.listdir(source_path):
-            full_path = os.path.join(source_path, path)
-            jip_log(order, ("full_path: %s"%full_path))
-
-            if os.path.isfile(full_path):
-                file_name = os.path.basename(full_path)
-                with open(full_path, 'rb') as f:
-                    r = requests.post(post_url, files={file_name: f}, headers=headers)
     except Exception as e:
         jip_log(order, ("download_file_list() ERROR: %s" % str(e)))
         print(str(e))
@@ -250,3 +248,8 @@ def jip_log(jip_order, msg):
 
 def get_dict(json_string):
     return json.loads(json_string)
+
+
+def make_tarfile(output_filename, source_dir):
+    with tarfile.open(output_filename, "w:gz") as tar:
+        tar.add(source_dir, arcname=os.path.basename(source_dir))
