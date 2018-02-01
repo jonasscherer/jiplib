@@ -156,7 +156,6 @@ def upload_results(order, source_path):
 
 def send_order(jip_order, async=False):
     global faas_url, callback_url, fileserver_url
-
     if async:
         post_url = urljoin(faas_url + "/async-function/", jip_order.target_function)
     else:
@@ -206,7 +205,7 @@ def jip_log(jip_order, msg):
 
     payload_dict = {'type': 'log', 'order': json_string, 'message': str(msg)}
     payload_json = json.dumps(payload_dict)
-    response = requests.post(callback_url, data=payload_json, timeout=2)
+    response = requests.post(callback_url, data=payload_json, timeout=3)
 
 
 def get_dict(json_string):
