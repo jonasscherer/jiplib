@@ -167,9 +167,11 @@ def upload_results(order, source_path, function_name):
         tar_file_path = os.path.join(source_path, function_name)
         make_tarfile(tar_file_path, source_path)
         filename = os.path.basename(tar_file_path)
+        jip_log(order,tar_file_path)
+        jip_log(order,filename)
+        jip_log(order,source_path)
         with open(tar_file_path, 'rb') as f:
             r = requests.post(post_url, files={filename: f}, headers=headers)
-        return "RESULT:" + tar_file_path
         return "RESULT:" + tar_file_path
 
 
