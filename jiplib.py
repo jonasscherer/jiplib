@@ -133,7 +133,8 @@ def download_file_list(image_list, target_path):
         os.makedirs(target_path)
 
     for img_file in image_list:
-        filename = os.path.join(img_file.url_fileserver)
+        filename = os.path.basename(img_file.url_fileserver)
+        server_url = urljoin(fileserver_url, img_file.url_fileserver)
         file_target = os.path.join(target_path, filename)
 
         urlretrieve(img_file.url_fileserver, file_target)
