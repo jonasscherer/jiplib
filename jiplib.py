@@ -175,10 +175,11 @@ def upload_results(order, source_path):
         jip_log(order, "Finished zipping...")
 
         url = fileserver_url
-        files = {'file': open(zip_file_path, 'rb'), 'user': str(order.author.id) + "_" + str(order.author.username),
-                 'hash': order.hash, 'function_name': function_name}
+        files = {'file': open(zip_file_path, 'rb')}
+        headers = {'user': str(order.author.id) + "_" + str(order.author.username), 'hash': order.hash,
+                   'function_name': function_name}
 
-        r = requests.post(url, files=files)
+        r = requests.post(url, files=files, data=headers)
         print(r.text)
 
         server_file_path = os.path.join("orders", str(order.author.id) + "_" + str(order.author.username), order.hash,
