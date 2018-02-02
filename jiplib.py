@@ -5,7 +5,9 @@ from copy import copy
 import sys, requests, re, shutil, os, urllib
 from urllib.parse import urljoin
 from urllib.request import urlretrieve
-import tarfile
+import zipfile
+from os import listdir
+from os.path import isfile, join
 
 
 def init(faas_url_tmp, fileserver_url_tmp, callback_url_tmp):
@@ -165,14 +167,14 @@ def upload_results(order, source_path):
 
         headers = {'user': str(order.author.id) + "_" + str(order.author.username), 'hash': order.hash,
                    'function_name': function_name}
-        tar_file_path = os.path.join(source_path, function_name + ".tar.gz")
+        tar_file_path = os.path.join(source_path, function_name + ".zip")
         filename = os.path.basename(tar_file_path)
         jip_log(order, tar_file_path)
         jip_log(order, filename)
         jip_log(order, source_path)
         jip_log(order, post_url)
 
-        make_tarfile(tar_file_path, source_path)
+        compress_file(source_path, tar_file_path)
 
         jip_log(order, "Finished zipping...")
         with open(tar_file_path, 'rb') as f:
@@ -280,6 +282,12 @@ def get_dict(json_string):
     return json.loads(json_string)
 
 
-def make_tarfile(output_filename, source_dir):
-    with tarfile.open(output_filename, "w:gz") as tar:
-        tar.add(source_dir, arcname=os.path.basename(source_dir))
+def compress_file(source_path, zfilename):
+    zipf = zipfile.ZipFile(zfilename, 'w', zipfile.ZIP_DEFLATED)
+
+    # ziph is zipfile handle
+    for root, dirs, files in os.walk(source_path):
+        for file in files:
+            zipf.write(os.path.join(root, file), file)
+
+    zipf.close()
