@@ -179,7 +179,7 @@ def upload_results(order, source_path):
         headers = {'user': str(order.author.id) + "_" + str(order.author.username), 'hash': order.hash,
                    'function_name': function_name}
 
-        r = requests.post(url, files=files, data=headers)
+        r = requests.post(url, headers=headers, files=files)
         print(r.text)
 
         server_file_path = os.path.join("orders", str(order.author.id) + "_" + str(order.author.username), order.hash,
