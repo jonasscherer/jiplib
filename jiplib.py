@@ -171,7 +171,6 @@ def upload_results(order, source_path):
         jip_log(order, zip_file_path)
         jip_log(order, filename)
         jip_log(order, source_path)
-        jip_log(order, post_url)
 
         compress_file(source_path, zip_file_path)
 
