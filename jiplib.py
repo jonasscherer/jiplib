@@ -5,9 +5,9 @@ from copy import copy
 import sys, requests, re, shutil, os, urllib
 from urllib.parse import urljoin
 from urllib.request import urlretrieve
-import zipfile
 from os import listdir
 from os.path import isfile, join
+import pycurl
 
 
 def init(faas_url_tmp, fileserver_url_tmp, callback_url_tmp):
@@ -164,34 +164,33 @@ def upload_results(order, source_path):
 
         function_name = order.target_function
 
-        zip_file_path = os.path.join(source_path, function_name + ".zip")
+        zip_file_path = os.path.join(os.path.split(source_path)[0], function_name + ".zip")
+
         filename = os.path.basename(zip_file_path)
+
         jip_log(order, zip_file_path)
         jip_log(order, filename)
         jip_log(order, source_path)
 
         compress_file(source_path, zip_file_path)
+        if not os.path.isfile(zip_file_path):
+            print("File not Found!")
+        else:
+            jip_log(order, "Finished zipping...")
 
-        jip_log(order, "Finished zipping...")
+            post_file(order, zip_file_path)
 
-        url = fileserver_url
-        files = {'file': open(zip_file_path, 'rb')}
-        headers = {'user': str(order.author.id) + "_" + str(order.author.username), 'hash': order.hash,
-                   'function_name': function_name}
+            server_file_path = os.path.join("orders", str(order.author.id) + "_" + str(order.author.username),
+                                            order.hash,
+                                            function_name, filename)
+            update = JipUpdate()
+            update.id_order = order.id
+            update.update_message = server_file_path
+            update.progress = "100"
+            update.type = "result"
+            update.status = "finished"
 
-        r = requests.post(url, headers=headers, files=files)
-        print(r.text)
-
-        server_file_path = os.path.join("orders", str(order.author.id) + "_" + str(order.author.username), order.hash,
-                                        function_name, filename)
-        update = JipUpdate()
-        update.id_order = order.id
-        update.update_message = server_file_path
-        update.progress = "100"
-        update.type = "result"
-        update.status = "finished"
-
-        send_update(update)
+            send_update(update)
         return "RESULT:" + zip_file_path
 
 
@@ -285,11 +284,25 @@ def get_dict(json_string):
 
 
 def compress_file(source_path, zfilename):
-    zipf = zipfile.ZipFile(zfilename, 'w', zipfile.ZIP_DEFLATED)
+    zfilename = zfilename.replace(".zip", "")
 
-    # ziph is zipfile handle
-    for root, dirs, files in os.walk(source_path):
-        for file in files:
-            zipf.write(os.path.join(root, file), file)
+    shutil.make_archive(zfilename, 'zip', source_path)
 
-    zipf.close()
+
+def post_file(order, filepath):
+    global fileserver_url
+
+    function_name = order.target_function
+
+    headers = {'user': str(order.author.id) + "_" + str(order.author.username), 'hash': order.hash,
+               'function_name': function_name}
+
+    c = pycurl.Curl()
+    c.setopt(c.URL, fileserver_url)
+    c.setopt(c.POST, 1)
+    c.setopt(c.HTTPPOST, [("images_file", (c.FORM_FILE, filepath))])
+    c.setopt(pycurl.HTTPHEADER,
+             ['Accept-Language: en', 'user: %s' % (str(order.author.id) + "_" + str(order.author.username)),
+              'hash: %s' % order.hash, 'function_name: %s' % function_name])
+    c.perform()
+    c.close()
