@@ -139,15 +139,11 @@ def download_file_list(order, target_path):
         image_list = order.image_list
 
         for img_file in image_list:
-            jip_log(order, ("IN FOR"))
             filename = os.path.basename(img_file.url_fileserver)
             server_url = urljoin(fileserver_url, img_file.url_fileserver)
             file_target = os.path.join(target_path, filename)
-            jip_log(order, ("server_url %s" % server_url))
-            jip_log(order, ("file_target %s" % file_target))
             urlretrieve(server_url, file_target)
 
-        jip_log(order, ("END FOR"))
 
     except Exception as e:
         jip_log(order, ("download_file_list() ERROR: %s" % str(e)))
@@ -165,13 +161,9 @@ def upload_results(order, source_path):
 
         filename = os.path.basename(zip_file_path)
 
-        jip_log(order, zip_file_path)
-        jip_log(order, filename)
-        jip_log(order, source_path)
-
         compress_file(source_path, zip_file_path)
         if not os.path.isfile(zip_file_path):
-            print("File not Found!")
+            jip_log(order, "upload_results() - File not Found!")
         else:
             jip_log(order, "Finished zipping...")
 
@@ -273,7 +265,9 @@ def send_update(update):
 
 
     except Exception as e:
-        return e
+        jip_log(order, ("send_update() ERROR: %s" % str(e)))
+        print(str(e))
+        return "ERROR: " + str(e)
 
 
 def get_dict(json_string):
@@ -290,6 +284,7 @@ def post_file(order, filepath):
     global fileserver_url
     try:
         jip_log(order, "In post_file")
+        jip_log(order, "Fileserver-url: %s" % fileserver_url)
 
         function_name = order.target_function
 
