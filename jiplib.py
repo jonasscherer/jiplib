@@ -288,18 +288,28 @@ def compress_file(source_path, zfilename):
 
 def post_file(order, filepath):
     global fileserver_url
+    try:
+        jip_log(order, "In post_file")
 
-    function_name = order.target_function
+        function_name = order.target_function
 
-    headers = {'user': str(order.author.id) + "_" + str(order.author.username), 'hash': order.hash,
-               'function_name': function_name}
+        headers = {'user': str(order.author.id) + "_" + str(order.author.username), 'hash': order.hash,
+                   'function_name': function_name}
 
-    c = pycurl.Curl()
-    c.setopt(c.URL, fileserver_url)
-    c.setopt(c.POST, 1)
-    c.setopt(c.HTTPPOST, [("images_file", (c.FORM_FILE, filepath))])
-    c.setopt(pycurl.HTTPHEADER,
-             ['Accept-Language: en', 'user: %s' % (str(order.author.id) + "_" + str(order.author.username)),
-              'hash: %s' % order.hash, 'function_name: %s' % function_name])
-    c.perform()
-    c.close()
+        c = pycurl.Curl()
+        c.setopt(c.URL, fileserver_url)
+        c.setopt(c.POST, 1)
+        c.setopt(c.HTTPPOST, [("images_file", (c.FORM_FILE, filepath))])
+        c.setopt(pycurl.HTTPHEADER,
+                 ['Accept-Language: en', 'user: %s' % (str(order.author.id) + "_" + str(order.author.username)),
+                  'hash: %s' % order.hash, 'function_name: %s' % function_name])
+        c.perform()
+        c.close()
+
+        jip_log(order, "End post_file")
+
+
+    except Exception as e:
+        jip_log(order, ("post_file() ERROR: %s" % str(e)))
+        print(str(e))
+        return "ERROR: " + str(e)
