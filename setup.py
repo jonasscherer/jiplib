@@ -110,6 +110,7 @@ setup(
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
+        'requests',
         'pycurl',
         'jsonpickle'
     ],  # Optional
