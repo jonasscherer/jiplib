@@ -1,12 +1,9 @@
 import uuid
 import jsonpickle
 import json
-from copy import copy
-import sys, requests, re, shutil, os, urllib
+import requests, shutil, os
 from urllib.parse import urljoin
 from urllib.request import urlretrieve
-from os import listdir
-from os.path import isfile, join
 import pycurl
 
 
