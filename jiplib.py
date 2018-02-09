@@ -19,8 +19,8 @@ def create_uid():
     return uuid.uuid4()
 
 
-def convert_object2json(order_obj):
-    return jsonpickle.encode(order_obj)
+def convert_object2json(order_obj, unpicklable=True):
+    return jsonpickle.encode(order_obj, unpicklable=unpicklable)
 
 
 def convert_json2object(json_str):
@@ -213,7 +213,7 @@ def send_order(jip_order, async=False):
         return str(e)
 
 
-def get_function_info(function_name, async=False):
+def get_function_info(function_name, timeout=2, async=False):
     try:
 
         global faas_url
@@ -221,7 +221,7 @@ def get_function_info(function_name, async=False):
 
         payload_dict = {'command': 'info'}
         payload_json = json.dumps(payload_dict)
-        response = requests.post(post_url, data=payload_json, timeout=1)
+        response = requests.post(post_url, data=payload_json, timeout=timeout)
         response_text = response.text
 
         if "py/object" in response_text:
