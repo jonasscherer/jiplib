@@ -8,14 +8,14 @@ import pycurl
 
 
 def init(faas_url_tmp, fileserver_url_tmp, jip_url_tmp):
-    global faas_url, fileserver_url, callback_url, faas_url_cluster, fileserver_url_cluster, callback_url_cluster
+    global faas_url, fileserver_url, jip_url, faas_url_cluster, fileserver_url_cluster, jip_url_cluster
 
     faas_url = faas_url_tmp
     fileserver_url = fileserver_url_tmp
     jip_url = jip_url_tmp
     faas_url_cluster = 'http://gateway:8080/'
-    fileserver_url_cluster= 'http://fileserver-service:8000/'
-    jip_url_cluster= 'http://jip-service:8000/'
+    fileserver_url_cluster = 'http://fileserver-service:8000/'
+    jip_url_cluster = 'http://jip-service:8000/'
 
 
 def create_uid():
@@ -209,10 +209,10 @@ def send_order(jip_order, async=False):
 
         response = requests.post(post_url, data=payload_json, timeout=5)
         if response.text is not None:
-            print("Function response: %s" % response.text)
+            print("Function response: %s %s" % (str(response.status_code), response.text))
 
     except Exception as e:
-        print(str(e))
+        print("IN SENDE ORDER: %s" % str(e))
         return str(e)
 
 
