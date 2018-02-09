@@ -7,12 +7,15 @@ from urllib.request import urlretrieve
 import pycurl
 
 
-def init(faas_url_tmp, fileserver_url_tmp, callback_url_tmp):
-    global faas_url, fileserver_url, callback_url
+def init(faas_url_tmp, fileserver_url_tmp, jip_url_tmp):
+    global faas_url, fileserver_url, callback_url, faas_url_cluster, fileserver_url_cluster, callback_url_cluster
 
     faas_url = faas_url_tmp
     fileserver_url = fileserver_url_tmp
-    callback_url = callback_url_tmp
+    jip_url = jip_url_tmp
+    faas_url_cluster = 'http://gateway:8080/'
+    fileserver_url_cluster= 'http://fileserver-service:8000/'
+    jip_url_cluster= 'http://jip-service:8000/'
 
 
 def create_uid():
@@ -192,7 +195,7 @@ def upload_results(order, source_path):
 def send_order(jip_order, async=False):
     try:
 
-        global faas_url, callback_url, fileserver_url
+        global faas_url, jip_url, fileserver_url
         if async:
             post_url = urljoin(faas_url + "/async-function/", jip_order.target_function)
         else:
@@ -201,7 +204,7 @@ def send_order(jip_order, async=False):
         json_string = convert_object2json(jip_order)
         payload_dict = {'command': 'order', 'order': json_string, 'FILESERVER_URL': fileserver_url,
                         'FAAS_URL': faas_url,
-                        'CALLBACK_URL': callback_url, 'X-Callback-Url': callback_url}
+                        'CALLBACK_URL': jip_url, 'X-Callback-Url': jip_url + "final/"}
         payload_json = json.dumps(payload_dict)
 
         response = requests.post(post_url, data=payload_json, timeout=5)
@@ -259,9 +262,9 @@ def jip_log(jip_order, msg):
 
 def send_update(update):
     try:
-        global callback_url
+        global jip_url
         update_json = convert_object2json(update)
-        response = requests.post(callback_url, data=update_json, timeout=3)
+        response = requests.post(jip_url, data=update_json, timeout=3)
 
 
     except Exception as e:
